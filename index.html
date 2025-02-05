@@ -1,49 +1,329 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <!--
-	Aerial by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+Geistliches Eigentum von Niklas L. (https://github.com/nikipuh)
+Erstellt mit Hilfe von Claude.ai
 -->
 <html>
-	<head>
-		<title>Niklas</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="is-preload">
-		<div id="wrapper">
-			<div id="bg"></div>
-			<div id="overlay"></div>
-			<div id="main">
+<head>
+    <meta charset="UTF-8">
+    <title>Notizen</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --toolbar-bg: rgba(245, 245, 245, 0.95);
+            --divider-color: #dddddd;
+        }
+        
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --toolbar-bg: rgba(45, 45, 45, 0.95);
+            --divider-color: #444444;
+        }
 
-				<!-- Header -->
-					<header id="header">
-						<h1>സ.com</h1>
-						<p>Achtung Baustelle: An dieser Website wird noch gefeilt.</p>
-						<nav>
-							<ul>
-								<!-- <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-								<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-								<li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
-								<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
-								<li><a href="#" class="icon solid fa-envelope"><span class="label">Email</span></a></li> -->
-							</ul>
-						</nav>
-					</header>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
 
-				<!-- Footer -->
-					<footer id="footer">
-						<span class="copyright">&copy; Niklas L. Design: <a href="http://html5up.net">HTML5 UP</a></span>
-					</footer>
+        .toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            background: var(--toolbar-bg);
+            border-radius: 12px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
 
-			</div>
-		</div>
-		<script>
-			window.onload = function() { document.body.classList.remove('is-preload'); }
-			window.ontouchmove = function() { return false; }
-			window.onorientationchange = function() { document.body.scrollTop = 0; }
-		</script>
-	</body>
+        .tool-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .tool-btn:hover {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .tool-btn.active {
+            background: #007AFF;
+            color: white;
+        }
+
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 2px solid var(--bg-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        #sizeSlider {
+            width: 100px;
+            -webkit-appearance: none;
+            height: 4px;
+            background: #007AFF;
+            border-radius: 2px;
+        }
+
+        #sizeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--bg-color);
+            border-radius: 50%;
+            border: 2px solid #007AFF;
+            cursor: pointer;
+        }
+
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: var(--divider-color);
+            margin: 0 4px;
+        }
+
+        .text-element {
+            position: absolute;
+            background: transparent;
+            border: 1px solid transparent;
+            color: inherit;
+            font-family: inherit;
+            padding: 4px;
+            resize: both;
+            overflow: hidden;
+            min-width: 50px;
+            min-height: 20px;
+        }
+
+        .text-element:hover {
+            border: 1px solid #007AFF;
+        }
+
+        .text-element:focus {
+            outline: none;
+            border: 1px solid #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="toolbar">
+        <button class="tool-btn active" id="pencilBtn">✏️ Bleistift</button>
+        <button class="tool-btn" id="penBtn">🖊️ Stift</button>
+        <button class="tool-btn" id="textBtn">T Text</button>
+        <div class="divider"></div>
+        <input type="color" class="color-picker" id="colorPicker" value="#000000">
+        <input type="range" id="sizeSlider" min="1" max="20" value="2">
+        <div class="divider"></div>
+        <button class="tool-btn" id="eraseBtn">🗑️ Löschen</button>
+        <button class="tool-btn" id="clearBtn">Alles Löschen</button>
+        <div class="divider"></div>
+        <button class="tool-btn" id="themeBtn">🌓</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let currentTool = 'pencil';
+        let currentColor = '#000000';
+        let currentSize = 2;
+        let lastX = 0;
+        let lastY = 0;
+        let textElements = [];
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            redrawCanvas();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            textElements.forEach(el => {
+                el.style.color = isDark ? '#333333' : '#ffffff';
+            });
+        }
+
+        document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+
+        function createTextElement(x, y) {
+            const textArea = document.createElement('textarea');
+            textArea.className = 'text-element';
+            textArea.style.left = x + 'px';
+            textArea.style.top = y + 'px';
+            textArea.style.color = currentColor;
+            textArea.style.fontSize = (currentSize * 8) + 'px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textElements.push(textArea);
+
+            textArea.addEventListener('input', () => {
+                textArea.style.height = 'auto';
+                textArea.style.height = textArea.scrollHeight + 'px';
+                saveState();
+            });
+
+            textArea.addEventListener('mousedown', (e) => {
+                if (currentTool !== 'text') {
+                    e.stopPropagation();
+                }
+            });
+        }
+
+        function saveState() {
+            localStorage.setItem('drawing', canvas.toDataURL());
+            const textState = textElements.map(el => ({
+                x: el.style.left,
+                y: el.style.top,
+                text: el.value,
+                color: el.style.color,
+                fontSize: el.style.fontSize
+            }));
+            localStorage.setItem('textElements', JSON.stringify(textState));
+        }
+
+        function loadState() {
+            const savedDrawing = localStorage.getItem('drawing');
+            if (savedDrawing) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = savedDrawing;
+            }
+
+            const savedText = localStorage.getItem('textElements');
+            if (savedText) {
+                JSON.parse(savedText).forEach(el => {
+                    const textArea = document.createElement('textarea');
+                    textArea.className = 'text-element';
+                    textArea.style.left = el.x;
+                    textArea.style.top = el.y;
+                    textArea.value = el.text;
+                    textArea.style.color = el.color;
+                    textArea.style.fontSize = el.fontSize;
+                    document.body.appendChild(textArea);
+                    textElements.push(textArea);
+                });
+            }
+        }
+
+        loadState();
+
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.id === 'themeBtn') return;
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                if (btn.id !== 'clearBtn') {
+                    btn.classList.add('active');
+                }
+                currentTool = btn.id.replace('Btn', '');
+                
+                if (btn.id === 'clearBtn' && confirm('Möchten Sie wirklich alles löschen?')) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    textElements.forEach(el => el.remove());
+                    textElements = [];
+                    saveState();
+                }
+            });
+        });
+
+        document.getElementById('colorPicker').addEventListener('input', (e) => {
+            currentColor = e.target.value;
+        });
+
+        document.getElementById('sizeSlider').addEventListener('input', (e) => {
+            currentSize = e.target.value;
+        });
+
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = getCoordinates(e);
+            
+            if (currentTool === 'text') {
+                createTextElement(lastX, lastY);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing || currentTool === 'text') return;
+            e.preventDefault();
+            
+            const [x, y] = getCoordinates(e);
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = currentTool === 'erase' ? getComputedStyle(document.body).getPropertyValue('--bg-color') : currentColor;
+            ctx.lineWidth = currentSize;
+            ctx.lineCap = currentTool === 'pen' ? 'round' : 'butt';
+            ctx.stroke();
+            
+            [lastX, lastY] = [x, y];
+            saveState();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+            return [x, y];
+        }
+
+        function redrawCanvas() {
+            const savedDrawing = localStorage.getItem('drawing');
+            if (savedDrawing) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0);
+                img.src = savedDrawing;
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+    </script>
+</body>
 </html>
